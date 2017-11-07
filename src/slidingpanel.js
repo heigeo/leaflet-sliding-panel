@@ -212,7 +212,11 @@ var SlidingPanel = L.Class.extend({
             content = this._content || [];
         this._navRight.style.display = (index < content.length - 1) ? 'block' : 'none';
         this._navLeft.style.display = index > 0 ? 'block' : 'none';
-        this._contentNode.style.left = (-100 * index) + '%';
+        Array.prototype.forEach.call(this._contentNode.children, function(el) {
+            el.style.transform = (
+                'translate(' + (-100 * index) + '%, 0px)'
+            );
+        });
         if (this._featureGroup) {
             this._featureGroup.getLayers().forEach(function(layer, i) {
                 var color;
