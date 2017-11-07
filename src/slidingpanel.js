@@ -320,6 +320,9 @@ var SlidingPanel = L.Class.extend({
         if (!touch || !this._map) {
             return;
         }
+        if (evt.target && evt.target.tagName == 'A') {
+            return;
+        }
         this._startPoint = this._map.mouseEventToContainerPoint(touch);
         L.DomEvent.preventDefault(evt);
     },
