@@ -111,13 +111,12 @@ var SlidingPanel = L.Class.extend({
             features = features.features;
         }
         this._features = features;
+        features = features.map(function(feature, index) {
+            feature._index = index;
+            return feature;
+        });
         this._initFeatureGroup();
-        this._featureGroup.clearLayers().addData(features);
-        this._featureGroup.getLayers().forEach(function(layer, i) {
-            layer.on('click', function() {
-                this.navigateTo(i);
-            }, this);
-        }, this);
+        this._featureGroup.clearLayers().addData(features.reverse());
         this._updateNav();
     },
     '_initFeatureGroup': function() {
@@ -129,6 +128,11 @@ var SlidingPanel = L.Class.extend({
                     });
                 }
             });
+            this._featureGroup.on('click', function(evt) {
+                if (evt.layer && evt.layer.feature) {
+                    this.navigateTo(evt.layer.feature._index);
+                }
+            }, this);
         }
         if (this._map) {
             if (this._featureGroup._map !== this._map) {
@@ -269,9 +273,10 @@ var SlidingPanel = L.Class.extend({
         });
 
         if (this._featureGroup) {
-            this._featureGroup.getLayers().forEach(function(layer, i) {
-                var color;
-                if (i == this._currentIndex) {
+            this._featureGroup.eachLayer(function(layer) {
+                var color,
+                    index = layer.feature && layer.feature._index;
+                if (index == this._currentIndex) {
                     color = this.options.activeFeatureColor;
                 } else {
                     color = this.options.inactiveFeatureColor;
