@@ -13,41 +13,48 @@
     transition: top 0.3s;
     overflow: hidden;
     transform: translate3d(0px, 0px, 0px);
+    cursor: auto;
+}
+.lsp-container.lsp-touch {
+    cursor: grab;
 }
 .lsp-handle {
     margin-left: 40%;
     margin-right: 40%;
+    display: none;
 }
-.lsp-button {
+.lsp-touch .lsp-handle {
+    display: block;
+}
+.lsp-nav {
     position: absolute;
+    right: 0.25em;
+    top: 0.25em;
+    z-index: 3000;
+}
+.lsp-nav button {
     color: #999;
     border: 1px solid #999;
-    width: 2em;
-    height: 2em;
-    border-radius: 1em;
+    font-size: 1em;
+    width: 1.7em;
+    height: 1.7em;
+    border-radius: 0.4em;
+    margin: 0.15em;
     padding: 0;
     text-align: center;
     background-color: white;
-    z-index: 3000;
-    opacity: 0.25;
+    opacity: 0.5;
     outline: 0;
+    float: right;
+    cursor: pointer;
 }
-.lsp-button:hover {
+.lsp-nav button:hover {
     opacity: 0.75;
 }
-
-.lsp-close {
-    right: 0.25em;
-    top: 0.25em;
-    font-size: 0.8em;
+.lsp-touch .lsp-nav button {
+    opacity: 0.3;
 }
 
-.lsp-nav {
-    top: 1.5em;
-    font-size: 1em;
-    font-weight: bold;
-    transition: top 0.3s, left 0.3s, right 0.3s, font-size 0.3s;
-}
 .lsp-header {
     margin-top: 0;
     padding-bottom: 0.5em;
@@ -55,37 +62,14 @@
     border-bottom: 1px solid #ccc;
 }
 
-.lsp-left {
-    left: 1em;
-}
-
-.lsp-right {
-    right: 1.5em;
-}
-
 .lsp-container.lsp-minimal {
-    top: calc(100% - 5em);
+    top: calc(100% - 10em);
 }
 .lsp-container.lsp-medium {
     top: 45%;
 }
 .lsp-container.lsp-full {
     top: 5%;
-}
-
-.lsp-container.lsp-medium .lsp-nav {
-    top: 20%;
-    font-size: 2em;
-}
-.lsp-container.lsp-full .lsp-nav {
-    top: 45%;
-    font-size: 2em;
-}
-.lsp-container.lsp-medium .lsp-left, .lsp-container.lsp-full .lsp-left {
-    left: 0.5em; 
-}
-.lsp-container.lsp-medium .lsp-right, .lsp-container.lsp-full .lsp-right {
-    right: 0.5em; 
 }
 
 .lsp-content {

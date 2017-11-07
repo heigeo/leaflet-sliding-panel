@@ -61,6 +61,9 @@ var SlidingPanel = L.Class.extend({
     'open': function() {
         this.setState('minimal');
     },
+    'minimize': function() {
+        this.setState('minimal');
+    },
     'full': function() {
         this.setState('full');
     },
@@ -88,11 +91,11 @@ var SlidingPanel = L.Class.extend({
         }
         if (state == 'closed') {
             this._currentIndex = 0;
-            this._updateNav();
             if (this._featureGroup) {
                 this._featureGroup.clearLayers();
             }
         }
+        this._updateNav();
     },
     'setContent': function(content) {
         if (!L.Util.isArray(content)) {
@@ -174,31 +177,21 @@ var SlidingPanel = L.Class.extend({
     },
     'onAdd': function(map) {
         var container = L.DomUtil.create('div', 'lsp-container');
-        L.DomEvent.on(container, 'dblclick', function() {
-            if (this._state == 'full') {
-                this.setState('minimal');
-            } else {
-                this.expand();
-            }
-        }, this);
+        if (L.Browser.touch) {
+            L.DomUtil.addClass(container, 'lsp-touch');
+        }
 
         var hr = L.DomUtil.create('hr', 'lsp-handle', container);
         L.DomEvent.on(hr, 'click', this.expand, this);
-        var button = L.DomUtil.create('button', 'lsp-button lsp-close', container);
-        button.type = 'button';
-        button.innerText = 'X';
-        this._navRight = L.DomUtil.create(
-            'button', 'lsp-button lsp-nav lsp-right', container
-        );
-        this._navRight.innerHTML = '&#10095';
-        this._navLeft = L.DomUtil.create(
-            'button', 'lsp-button lsp-nav lsp-left', container
-        );
-        this._navLeft.innerHTML = '&#10094';
 
-        L.DomEvent.on(button, 'click', this.close, this);
-        L.DomEvent.on(this._navRight, 'click', this.navRight, this);
-        L.DomEvent.on(this._navLeft, 'click', this.navLeft, this);
+        var navbar = L.DomUtil.create('div', 'lsp-nav', container);
+
+        this._createButton('close', '&times;', navbar);
+        this._createButton('minimize', '&mdash;', navbar);
+        this._createButton('full', '&#9633;', navbar); // Future: &#128470;
+        this._createButton('navRight', '&#10095;', navbar);
+        this._createButton('navLeft', '&#10094;', navbar);
+
         this._updateNav();
 
         return container;
@@ -236,19 +229,45 @@ var SlidingPanel = L.Class.extend({
         this._currentIndex = 0;
         this._updateNav();
     },
+    '_createButton': function(name, text, container) {
+        var button = L.DomUtil.create('button', 'lsp-' + name, container);
+        button.type = 'button';
+        button.innerHTML = text;
+        L.DomEvent.on(button, 'click', this[name], this);
+        this._buttons = this._buttons || {};
+        this._buttons[name] = button;
+        return button;
+    },
     '_updateNav': function() {
-        if (!this._navRight || !this._navLeft || !this._contentNode) {
+        if (!this._buttons || !this._contentNode) {
             return;
         }
+
         var index = this._currentIndex || 0,
-            content = this._content || [];
-        this._navRight.style.display = (index < content.length - 1) ? 'block' : 'none';
-        this._navLeft.style.display = index > 0 ? 'block' : 'none';
+            content = this._content || [],
+            buttons = this._buttons;
+
+        if (this._state != 'closed') {
+            showButton('navRight', (index < content.length - 1));
+            showButton('navLeft', (index > 0));
+            showButton('minimize', (
+                !L.Browser.touch && this._state != 'minimal'
+            ));
+            showButton('full', (
+                !L.Browser.touch && this._state != 'full'
+            ));
+        }
+
+        function showButton(name, show) {
+            buttons[name].style.display = show ? 'block': 'none';
+        }
+
         Array.prototype.forEach.call(this._contentNode.children, function(el) {
             el.style.transform = (
                 'translate(' + (-100 * index) + '%, 0px)'
             );
         });
+
         if (this._featureGroup) {
             this._featureGroup.getLayers().forEach(function(layer, i) {
                 var color;
@@ -293,7 +312,7 @@ var SlidingPanel = L.Class.extend({
     },
     '_startSwipe': function(evt) {
         var touch = evt.touches && evt.touches[0];
-        if (!touch || !this._map) { 
+        if (!touch || !this._map) {
             return;
         }
         this._startPoint = this._map.mouseEventToContainerPoint(touch);
@@ -301,7 +320,7 @@ var SlidingPanel = L.Class.extend({
     },
     '_endSwipe': function(evt) {
         var touch = evt.changedTouches && evt.changedTouches[0];
-        if (!touch || !this._startPoint || !this._map) { 
+        if (!touch || !this._startPoint || !this._map) {
             return;
         }
         var endPoint = this._map.mouseEventToContainerPoint(touch);
@@ -320,7 +339,7 @@ var SlidingPanel = L.Class.extend({
         }
         var direction, value;
 
-        if (absX > absY) { 
+        if (absX > absY) {
             value = absX;
             if (diff.x < 0) {
                 direction = 'left';
