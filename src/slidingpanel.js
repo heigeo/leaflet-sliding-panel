@@ -55,7 +55,7 @@ var SlidingPanel = L.Class.extend({
             this.navLeft();
         });
         this.setContent(options.content || []);
-        this.setFeatureGroup(options.featureGroup || null);
+        this.setFeatures(options.features || []);
         this.setState(options.state || 'closed');
     },
     'open': function() {
@@ -89,6 +89,9 @@ var SlidingPanel = L.Class.extend({
         if (state == 'closed') {
             this._currentIndex = 0;
             this._updateNav();
+            if (this._featureGroup) {
+                this._featureGroup.clearLayers();
+            }
         }
     },
     'setContent': function(content) {
@@ -98,14 +101,37 @@ var SlidingPanel = L.Class.extend({
         this._content = content;
         this._updateContent();
     },
-    'setFeatureGroup': function(featureGroup) {
-        this._featureGroup = featureGroup;
-        this._updateNav();
-        featureGroup.getLayers().forEach(function(layer, i) {
+    'setFeatures': function(features) {
+        if (!features) {
+            features = [];
+        } else if (features && features.type && features.features) {
+            features = features.features;
+        }
+        this._features = features;
+        this._initFeatureGroup();
+        this._featureGroup.clearLayers().addData(features);
+        this._featureGroup.getLayers().forEach(function(layer, i) {
             layer.on('click', function() {
                 this.navigateTo(i);
             }, this);
         }, this);
+        this._updateNav();
+    },
+    '_initFeatureGroup': function() {
+        if (!this._featureGroup) {
+            this._featureGroup = L.geoJson(null, {
+                'pointToLayer': function (feature, latlng) {
+                    return L.circleMarker(latlng, {
+                        'radius': 8
+                    });
+                }
+            });
+        }
+        if (this._map) {
+            if (this._featureGroup._map !== this._map) {
+                this._featureGroup.addTo(this._map);
+            }
+        }
     },
     'addTo': function(map) {
         // c.f. L.Control.onAdd
@@ -124,11 +150,17 @@ var SlidingPanel = L.Class.extend({
         if (this._state) {
             this.setState(this._state);
         }
+        if (this._features) {
+            this.setFeatures(this._features);
+        }
         return this;
     },
     'remove': function() {
         if (!this._map) {
             return;
+        }
+        if (this._featureGroup) {
+            this._map.removeLayer(this._featureGroup);
         }
         this._map = null;
 
@@ -315,7 +347,7 @@ function slidingPanel(content) {
 }
 
 L.Map.include({
-    'openPanel': function(content, featureGroup, options) {
+    'openPanel': function(content, features, options) {
         if (!options) {
              options = {};
         }
@@ -327,12 +359,12 @@ L.Map.include({
             this._panel = content.addTo(this);
         } else if (this._panel) {
             this._panel.setContent(content);
-            this._panel.setFeatureGroup(featureGroup);
+            this._panel.setFeatures(features);
         } else {
             this._panel = new SlidingPanel(L.Util.extend(
                 {
                     "content": content,
-                    "featureGroup": featureGroup
+                    "features": features
                 },
                 options
             )).addTo(this);
